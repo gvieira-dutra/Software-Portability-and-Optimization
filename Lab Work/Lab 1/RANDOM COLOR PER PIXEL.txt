@@ -1,0 +1,14 @@
+	LDA #$00
+ 	STA $40
+ 	LDA #$02
+ 	STA $41
+ 	LDA #$07
+ 	LDY #$00
+LOOP:	STA ($40),Y
+ 	LDA $FE
+ 	INY 
+ 	BNE LOOP  
+ 	INC $41
+ 	LDX $41
+ 	CPX #$06
+ 	BNE LOOP

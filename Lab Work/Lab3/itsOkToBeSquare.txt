@@ -1,0 +1,437 @@
+; IT'S OKAY TO BE SQUARE
+
+ define		SCINIT		$ff81 ; initialize/clear screen
+ define		CHRIN		$ffcf ; input character from keyboard
+ define		CHROUT		$ffd2 ; output character to screen
+ define		SCREEN		$ffed ; get screen size
+ define		PLOT		$fff0 ; get/set cursor coordinates
+
+JSR WELCOME_MESSAGE
+JSR INSTRUCTION_MESSAGE 
+JSR INSTRUCTION_MESSAGE2 
+define DELAY_COUNT $20
+
+LDA #00 
+STA $40
+LDA #02 
+STA $41
+LDA #7 ; COLOR CODE
+LDY #00
+
+TOP_LOOP: STA ($40),Y
+  INY
+  CPY #64
+  BNE TOP_LOOP
+
+LDA #00
+STA $40
+LDA #05
+STA $41
+
+LDA #7 ; COLOR CODE
+LDY #192
+
+BOTTOM_LOOP: STA ($40),Y
+  INY
+  CPY #255
+  BNE BOTTOM_LOOP
+  STA ($40),Y
+
+LDA #00
+STA $40
+LDA #02
+STA $41
+LDY #00
+
+LDA #7 ; COLOR CODE
+
+VERTICAL_LOOP: STA ($40),Y
+  INY
+  STA ($40),Y
+  ;SUM
+  CLC
+  TYA
+  ADC #29
+  TAY
+  LDA #7 
+  STA ($40),Y
+  INY
+  STA ($40),Y
+ 
+  CPY #255
+  INY 
+  BNE VERTICAL_LOOP
+    INC $41 
+    LDX $41
+    CPX #6
+    BNE VERTICAL_LOOP
+
+LDA #$00
+STA $40          ; Set low byte of the starting address
+LDA #$03
+STA $41          ; Set high byte of the starting address
+
+LDA #$d          ; Light green color code
+LDX #0          
+
+JSR DRAW_SQUARE  ; Call subroutine to draw the square
+
+LDA #$00
+STA $40
+LDA #$04
+STA $41
+
+JSR DRAW_SQUARE  ; Call subroutine to continue drawing the square
+
+JSR CONTINUE_MESSAGE
+
+JSR GAME_START; Starting the game
+
+; -------------------------------
+; Subroutine to draw an 8x8 square
+; -------------------------------
+DRAW_SQUARE:
+   
+    TXA
+    PHA
+    TYA
+    PHA
+
+    LDY #8
+    CLC
+    LDA #$8
+
+DRAW_LOOP:
+    LDY #8       ; Reset Y for each row
+
+INNER_LOOP:
+    LDA #$d      ; Load color code
+    STA ($40),Y  ; Write color to screen at ($40),Y
+    INY          ; Increment Y to move to the next pixel
+    CPY #24      ; Compare Y with the end position for this row
+    BNE INNER_LOOP
+
+    ; Move to the next row (next block of pixels)
+    LDA $40
+    CLC
+    ADC #32      ; Adjust by 32 to go to the next row
+    STA $40
+
+    INX          ; Increment X to repeat for the next row
+    CPX #8       ; Draw 8 rows (for 8x8 square)
+    BNE DRAW_LOOP
+
+    ; Restore X and Y registers
+    PLA          ; Pull A (previous Y value) from the stack
+    TAY          ; Transfer A back to Y
+    PLA          ; Pull A (previous X value) from the stack
+    TAX          ; Transfer A back to X
+
+    RTS          ; Return from subroutine
+
+;=================================
+; Welcome message subroutine
+WELCOME_MESSAGE:
+    JSR SCINIT                  ; Initialize and clear the screen
+    LDX #$00                    ; Use X to index the message
+char1: 
+    LDA welcomeText, X          ; Load character from welcomeText
+    BEQ done1                   ; If null terminator, branch to done
+    JSR CHROUT                  ; Put the character in A onto the screen
+    INX                         ; Increment X
+    BNE char1                   ; Branch if not zero
+done1: 
+   JSR newline_and_wait 
+    RTS                         ; Return from subroutine
+
+; Instruction message subroutine
+INSTRUCTION_MESSAGE:
+    LDX #$00
+char2: 
+    LDA instructionText1, X
+    BEQ done2
+    JSR CHROUT
+    INX
+    BNE char2
+done2:
+    JSR newline_and_wait 
+    RTS
+
+; Instruction message subroutine
+INSTRUCTION_MESSAGE2:
+    LDX #$00
+char3: 
+    LDA instructionText3, X
+    BEQ done3
+    JSR CHROUT
+    INX
+    BNE char3 
+done3:
+    JSR newline_and_wait 
+    RTS  
+; Continue message subroutine
+CONTINUE_MESSAGE:
+
+    LDX #$00
+char4: 
+    LDA continueText, X        
+    BEQ done4
+    JSR CHROUT
+    INX
+    BNE char4
+done4: 
+JSR newline_and_wait 
+JSR newline_and_wait 
+    RTS
+
+; Bye message subroutine
+BYE_MESSAGE:
+    LDX #$00
+char5: 
+    LDA byeText, X
+    BEQ done5
+    JSR CHROUT
+    INX
+    BNE char5
+done5: 
+    RTS
+
+
+newline_and_wait:
+    LDA #$0A                    ; Load newline character (LF)
+    JSR CHROUT 
+    JSR DELAY_MSG
+    RTS
+ 
+welcomeText:
+    DCB "W","e","l","c","o","m","e",32,"t","o",32,"I","T","'","S",32,"O","K","A","Y",32,"T","O",32,"B","E",32,"S","Q","U","A","R","E","!",00
+instructionText1:
+    DCB "U","s","e",32,"t","h","e",32,"a","r","r","o","w",32,"k","e","y","s",32,"t","o",32,"g","u","i","d","e",32,"t","h","e",32,"w","h","i","t","e",32,"p","i","x","e","l",".",00
+instructionText3:
+    DCB "D","o","n","'","t",32,"l","e","t",32,"i","t",32,"t","o","u","c","h",32,"t","h","e",32,"c","o","r","n","e","r","s",32,"o","r",32,"t","h","e",32,"m","i","d","d","l","e",32,"o","r",32,"y","o","u","'","l","l",32,"l","o","s","e",".",00
+continueText:
+    DCB "P","r","e","s","s",32,"a","n","y",32,"a","r","r","o","w",32,"t","o",32,"s","t","a","r","t","!",00
+byeText:
+    DCB "B","y","e",".",32,"T","h","a","n","k",32,"y","o","u",32,"f","o","r",32,"p","l","a","y","i","n","g","!",00
+
+
+  ; Delay to show next message for a smooth transition
+DELAY_MSG:
+  DELAY_SUB:
+    DEX
+    BNE DELAY_SUB 
+    RTS
+
+;====================
+; STARTING THE GAME 
+GAME_START:
+
+LDA #255            ; Set initial delay count
+STA DELAY_COUNT 
+
+define IMGPTR    $A0
+define SCRPTR    $A4
+define SCRPTRH   $A5
+
+LDA #1
+STA IMGPTR
+
+  LDA #00
+  STA SCRPTR
+  LDA #02
+  STA SCRPTRH
+
+  LDY #165
+  LDA #1 ;WHITE PIXEL
+  STA (SCRPTR), Y
+
+LDX #255
+
+; Define direction variable
+define DIRECTION  $22  
+
+; Direction constants
+define DIR_UP     $01
+define DIR_DOWN   $02
+define DIR_RIGHT  $03
+define DIR_LEFT   $04
+
+; Constants for arrow key codes
+define KEY_DOWN   $82
+define KEY_RIGHT  $81
+define KEY_UP     $80
+define KEY_LEFT   $83
+
+game_loop:
+    jsr getkey_input ; Check key input, update direction if key pressed (any arrow key)
+
+    ; Keep moving in the current direction
+    lda DIRECTION
+    cmp #DIR_DOWN
+    beq move_down   ; Move down if direction is down
+    cmp #DIR_RIGHT
+    beq move_right  ; Move right if direction is right
+    cmp #DIR_LEFT
+    beq move_left
+    cmp #DIR_UP
+    beq move_up
+
+    jmp game_loop   
+
+getkey_input:
+    lda $ff         ; Get the keystroke
+    beq no_key      ; If no key pressed, continue without changing direction
+
+    cmp #$82        ; Check if the key is down arrow
+    beq set_down
+    cmp #$81        ; Check if the key is right arrow
+    beq set_right
+    cmp #$83        ; Check if the key is left arrow
+    beq set_left
+    cmp #$80        ; Check if the key is up arrow
+    beq set_up
+
+
+no_key:
+    rts             ; Return without changing direction if no key
+
+set_down:
+    lda #DIR_DOWN   ; Set direction to down
+    sta DIRECTION
+    lda #0          ; Clear the key buffer
+    sta $ff
+    rts
+
+set_right:
+    lda #DIR_RIGHT  
+    sta DIRECTION
+    lda #0
+    sta $ff
+    rts
+
+set_left:
+    lda #DIR_LEFT  
+    sta DIRECTION
+    lda #0
+    sta $ff
+    rts
+
+set_up:
+    lda #DIR_UP
+    sta DIRECTION
+    lda #0
+    sta $ff
+    rts
+
+move_down:
+    jsr MOVE_DOWN   ; Call the MOVE_DOWN function
+    jmp game_loop   ; Go back to the game loop after movement to get next input
+
+move_right:
+    jsr MOVE_RIGHT
+    jmp game_loop
+
+move_left:
+    jsr MOVE_LEFT
+    jmp game_loop
+
+move_up:
+    jsr MOVE_UP
+    jmp game_loop
+
+MOVE_DOWN:
+ ; Replace the current position with a black pixel (erase current pixel)
+   LDA #$0
+   STA (SCRPTR), Y
+
+   ; Move down by 32 bytes to the next line
+   ; Adding 32 to SCRPTR, handle carry into SCRPTRH
+   LDA SCRPTR
+   CLC
+   ADC #32
+   STA SCRPTR
+
+   BCC NO_CARRY_DOWN   ; If no carry, skip incrementing high byte
+   INC SCRPTRH
+
+NO_CARRY_DOWN:
+   LDA (SCRPTR), Y   ; Load the next pixel value at the new position
+   CMP #$0           ; Compare with 0 (black pixel)
+   BNE GAME_OVER 
+   ; Place the white pixel at the new position
+   LDA #$1
+   STA (SCRPTR), Y
+
+   ; Call delay
+   JSR DELAY
+   RTS                ; Return to game loop
+
+
+MOVE_UP:
+   LDA #$0 
+   STA (SCRPTR), Y
+
+   LDA SCRPTR
+   SEC            ; Set carry for subtraction
+   SBC #32
+   STA SCRPTR
+
+   BCS NO_BORROW_UP
+   DEC SCRPTRH
+
+NO_BORROW_UP:
+   LDA (SCRPTR), Y
+   CMP #$0
+   BNE GAME_OVER 
+
+   LDA #$1
+   STA (SCRPTR), Y
+
+   JSR DELAY
+   RTS
+
+MOVE_RIGHT:
+  JSR DELAY
+  LDA #$0         ; REPLACE CURR WHITE PIXEL WITH BLACK PIXEL
+  STA (SCRPTR), Y
+  INY
+  
+  LDA (SCRPTR), Y
+  CMP #$0
+  BNE GAME_OVER
+  LDA #1 ;WHITE PIXEL
+  STA (SCRPTR), Y
+  ;BNE MOVE_RIGHT
+  RTS
+
+MOVE_LEFT:
+  JSR DELAY
+  LDA #$0 ; REPLACE IMG WITH BLACK PIXEL
+  STA (SCRPTR), Y
+  DEY
+  
+  LDA (SCRPTR), Y
+  CMP #$0
+  BNE GAME_OVER
+  LDA #1 ;WHITE PIXEL
+  STA (SCRPTR), Y
+  ;BNE MOVE_RIGHT
+  RTS
+
+DELAY: 
+DELAY:
+    LDX DELAY_COUNT    ; Load the current delay count
+D_SUB:
+    DEX                 ; Decrement X
+    BNE D_SUB          ; Loop until X is zero
+
+    ; After delay, decrease DELAY_COUNT to speed up the game and make it challenging!!!!
+    LDA DELAY_COUNT
+    DEC DELAY_COUNT
+    RTS
+
+GAME_OVER:
+  LDA #1
+  STA (SCRPTR), Y
+  JSR BYE_MESSAGE
+  BRK

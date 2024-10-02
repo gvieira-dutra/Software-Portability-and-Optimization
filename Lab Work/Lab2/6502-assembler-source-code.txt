@@ -1,0 +1,209 @@
+; TEST CODE FOR OUR SUBROUTINE
+
+define XPOS $20
+define YPOS $21
+
+; SET UP STRUCTURE IN MEMORY
+LDA #<G_X ; POINTER TO GRAPHIC
+STA $10
+LDA #>G_X
+STA $11
+LDA #$05
+STA $12       ; IMAGE WIDTH
+STA $13       ; IMAGE HEIGHT
+
+LDA #$00
+STA XPOS
+STA YPOS
+; TEST CODE FOR OUR SUBROUTINE
+
+; SET UP STRUCTURE IN MEMORY
+LDA #<G_X ; POINTER TO GRAPHIC
+STA $10
+LDA #>G_X
+STA $11
+LDA #$05
+STA $12       ; IMAGE WIDTH
+STA $13       ; IMAGE HEIGHT
+
+LDA #$01 ; DEFINES WHERE THE IMAGE WILL START APPEARING
+STA XPOS
+STA YPOS
+
+MAINLOOP:
+  
+  LDA #<G_O
+  STA $10
+  LDA #>G_O
+  STA $11
+
+  ; CALL THE SUBROUTINE
+  LDA #$10  ; LOCATION OF DATA STRUCTURE
+  LDX XPOS
+  LDY YPOS
+  JSR DRAW
+
+  LDY #$FF
+  LDX #$50
+DELAY:
+  DEY
+  BNE DELAY
+  DEX
+  BNE DELAY
+
+  LDA #<G_BLANK
+  STA $10
+  LDA #>G_BLANK
+  STA $11
+
+  LDA #$10 ; LOCATION OF DATA STRUCTURE
+  LDX XPOS
+  LDY YPOS
+  JSR DRAW
+
+  INC XPOS
+  INC YPOS
+  LDA #28
+  CMP XPOS
+  BNE MAINLOOP
+
+JMP $0600
+
+; ==========================================
+;
+; DRAW :: Subroutine to draw an image on 
+;         the bitmapped display
+;
+; Entry conditions:
+;    A - location in zero page of: 
+;        a pointer to the image (2 bytes)
+;        followed by the image width (1 byte)
+;        followed by the image height (1 byte)
+;    X - horizontal location to put the image
+;    Y - vertical location to put the image
+;
+; Exit conditions:
+;    All registers are undefined
+;
+; Zero-page memory locations
+define IMGPTR    $A0
+define IMGPTRH   $A1
+define IMGWIDTH  $A2
+define IMGHEIGHT $A3
+define SCRPTR    $A4
+define SCRPTRH   $A5
+define SCRX      $A6
+define SCRY      $A7
+
+DRAW:
+  ; SAVE THE X AND Y REG VALUES
+  STY SCRY
+  STX SCRX
+
+  ; GET THE DATA STRUCTURE
+  TAY
+  LDA $0000,Y
+  STA IMGPTR
+  LDA $0001,Y
+  STA IMGPTRH
+  LDA $0002,Y
+  STA IMGWIDTH
+  LDA $0003,Y
+  STA IMGHEIGHT
+
+  ; CALCULATE THE START OF THE IMAGE ON
+  ; SCREEN AND PLACE IN SCRPTRH
+  ;
+  ; THIS IS $0200 (START OF SCREEN) +
+  ; SCRX + SCRY * 32
+  ; 
+  ; WE'LL DO THE MULTIPLICATION FIRST
+  ; START BY PLACING SCRY INTO SCRPTR
+  LDA #$00
+  STA SCRPTRH
+  LDA SCRY
+  STA SCRPTR
+  ; NOW DO 5 LEFT SHIFTS TO MULTIPLY BY 32
+  LDY #$05     ; NUMBER OF SHIFTS
+MULT:
+  ASL SCRPTR   ; PERFORM 16-BIT LEFT SHIFT
+  ROL SCRPTRH
+  DEY
+  BNE MULT
+
+  ; NOW ADD THE X VALUE
+  LDA SCRX
+  CLC
+  ADC SCRPTR
+  STA SCRPTR
+  LDA #$00
+  ADC SCRPTRH
+  STA SCRPTRH
+
+  ; NOW ADD THE SCREEN BASE ADDRESS OF $0200
+  ; SINCE THE LOW BYTE IS $00 WE CAN IGNORE IT
+  LDA #$02
+  CLC
+  ADC SCRPTRH
+  STA SCRPTRH
+  ; NOTE WE COULD HAVE DONE TWO: INC SCRPTRH
+
+  ; NOW WE HAVE A POINTER TO THE IMAGE IN MEM
+  ; COPY A ROW OF IMAGE DATA
+COPYROW:
+  LDY #$00
+ROWLOOP:
+  LDA (IMGPTR),Y
+  STA (SCRPTR),Y
+  INY
+  CPY IMGWIDTH
+  BNE ROWLOOP
+
+  ; NOW WE NEED TO ADVANCE TO THE NEXT ROW
+  ; ADD IMGWIDTH TO THE IMGPTR
+  LDA IMGWIDTH
+  CLC
+  ADC IMGPTR
+  STA IMGPTR
+  LDA #$00
+  ADC IMGPTRH
+  STA IMGPTRH
+ 
+  ; ADD 32 TO THE SCRPTR
+  LDA #32
+  CLC
+  ADC SCRPTR
+  STA SCRPTR
+  LDA #$00
+  ADC SCRPTRH
+  STA SCRPTRH
+
+  ; DECREMENT THE LINE COUNT AND SEE IF WE'RE
+  ; DONE
+  DEC IMGHEIGHT
+  BNE COPYROW
+
+  RTS
+
+; ==========================================
+
+G_O:
+DCB $00,$0e,$0e,$0e,$00
+DCB $0e,$00,$00,$00,$0e
+DCB $0e,$00,$00,$00,$0e
+DCB $0e,$00,$00,$00,$0e
+DCB $00,$0e,$0e,$0e,$00
+
+G_X:
+DCB $07,$00,$00,$00,$07
+DCB $00,$07,$00,$07,$00
+DCB $00,$00,$07,$00,$00
+DCB $00,$07,$00,$07,$00
+DCB $07,$00,$00,$00,$07
+
+G_BLANK:
+DCB $00,$00,$00,$00,$00
+DCB $00,$00,$00,$00,$00
+DCB $00,$00,$00,$00,$00
+DCB $00,$00,$00,$00,$00
+DCB $00,$00,$00,$00,$00
