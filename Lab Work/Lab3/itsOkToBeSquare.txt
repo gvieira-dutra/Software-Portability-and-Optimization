@@ -76,13 +76,6 @@ LDX #0
 
 JSR DRAW_SQUARE  ; Call subroutine to draw the square
 
-LDA #$00
-STA $40
-LDA #$04
-STA $41
-
-JSR DRAW_SQUARE  ; Call subroutine to continue drawing the square
-
 JSR CONTINUE_MESSAGE
 
 JSR GAME_START; Starting the game
@@ -94,6 +87,7 @@ DRAW_SQUARE:
 
     LDY #8
     LDA #$8
+    LDX #$0
 
 DRAW_LOOP:
     LDY #8       ; Reset Y for each row
@@ -114,7 +108,10 @@ INNER_LOOP:
     INX          ; Increment X to repeat for the next row
     CPX #8       ; Draw 8 rows (for 8x8 square)
     BNE DRAW_LOOP
-
+    INC $41 
+    LDX $41
+    CPX #5
+    BNE DRAW_SQUARE
     RTS          ; Return from subroutine
 
 ;=================================
@@ -283,6 +280,13 @@ getkey_input:
 no_key:
     rts             ; Return without changing direction if no key
 
+set_right:
+    lda #DIR_RIGHT  
+    sta DIRECTION
+    lda #0
+    sta $ff
+    rts
+
 set_down:
     lda #DIR_DOWN   ; Set direction to down
     sta DIRECTION
@@ -290,12 +294,6 @@ set_down:
     sta $ff
     rts
 
-set_right:
-    lda #DIR_RIGHT  
-    sta DIRECTION
-    lda #0
-    sta $ff
-    rts
 
 set_left:
     lda #DIR_LEFT  
