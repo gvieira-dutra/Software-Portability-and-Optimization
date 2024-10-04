@@ -91,14 +91,8 @@ JSR GAME_START; Starting the game
 ; Subroutine to draw an 8x8 square
 ; -------------------------------
 DRAW_SQUARE:
-   
-    TXA
-    PHA
-    TYA
-    PHA
 
     LDY #8
-    CLC
     LDA #$8
 
 DRAW_LOOP:
@@ -106,9 +100,9 @@ DRAW_LOOP:
 
 INNER_LOOP:
     LDA #$d      ; Load color code
-    STA ($40),Y  ; Write color to screen at ($40),Y
+    STA ($40),Y  
     INY          ; Increment Y to move to the next pixel
-    CPY #24      ; Compare Y with the end position for this row
+    CPY #24      ; Compare Y with the end position for this line
     BNE INNER_LOOP
 
     ; Move to the next row (next block of pixels)
@@ -120,12 +114,6 @@ INNER_LOOP:
     INX          ; Increment X to repeat for the next row
     CPX #8       ; Draw 8 rows (for 8x8 square)
     BNE DRAW_LOOP
-
-    ; Restore X and Y registers
-    PLA          ; Pull A (previous Y value) from the stack
-    TAY          ; Transfer A back to Y
-    PLA          ; Pull A (previous X value) from the stack
-    TAX          ; Transfer A back to X
 
     RTS          ; Return from subroutine
 
@@ -229,9 +217,9 @@ GAME_START:
 LDA #255            ; Set initial delay count
 STA DELAY_COUNT 
 
-define IMGPTR    $A0
-define SCRPTR    $A4
-define SCRPTRH   $A5
+define IMGPTR    $A0  ; Image pointer
+define SCRPTR    $A4  ; screen position pointer low byte
+define SCRPTRH   $A5  ; screen position pointer hight byte
 
 LDA #1
 STA IMGPTR
@@ -240,12 +228,6 @@ STA IMGPTR
   STA SCRPTR
   LDA #02
   STA SCRPTRH
-
-  LDY #165
-  LDA #1 ;WHITE PIXEL
-  STA (SCRPTR), Y
-
-LDX #255
 
 ; Define direction variable
 define DIRECTION  $22  
@@ -261,6 +243,12 @@ define KEY_DOWN   $82
 define KEY_RIGHT  $81
 define KEY_UP     $80
 define KEY_LEFT   $83
+
+  LDY #165
+  LDA #1 ;WHITE PIXEL
+  STA (SCRPTR), Y
+
+LDX #255
 
 game_loop:
     jsr getkey_input ; Check key input, update direction if key pressed (any arrow key)
@@ -391,8 +379,11 @@ NO_BORROW_UP:
    RTS
 
 MOVE_RIGHT:
+    ; Decrease DELAY_COUNT to speed up the game and make it challenging!!!!
+  LDA DELAY_COUNT
+  DEC DELAY_COUNT
   JSR DELAY
-  LDA #$0         ; REPLACE CURR WHITE PIXEL WITH BLACK PIXEL
+  LDA #$0         
   STA (SCRPTR), Y
   INY
   
@@ -401,10 +392,11 @@ MOVE_RIGHT:
   BNE GAME_OVER
   LDA #1 ;WHITE PIXEL
   STA (SCRPTR), Y
-  ;BNE MOVE_RIGHT
   RTS
 
 MOVE_LEFT:
+  LDA DELAY_COUNT
+  DEC DELAY_COUNT
   JSR DELAY
   LDA #$0 ; REPLACE IMG WITH BLACK PIXEL
   STA (SCRPTR), Y
@@ -415,19 +407,13 @@ MOVE_LEFT:
   BNE GAME_OVER
   LDA #1 ;WHITE PIXEL
   STA (SCRPTR), Y
-  ;BNE MOVE_RIGHT
   RTS
 
-DELAY: 
 DELAY:
     LDX DELAY_COUNT    ; Load the current delay count
 D_SUB:
     DEX                 ; Decrement X
     BNE D_SUB          ; Loop until X is zero
-
-    ; After delay, decrease DELAY_COUNT to speed up the game and make it challenging!!!!
-    LDA DELAY_COUNT
-    DEC DELAY_COUNT
     RTS
 
 GAME_OVER:
