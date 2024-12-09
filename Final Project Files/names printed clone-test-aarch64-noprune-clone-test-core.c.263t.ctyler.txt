@@ -1,0 +1,41 @@
+
+;; Function scale_samples (scale_samples.default, funcdef_no=23, decl_uid=5500, cgraph_uid=24, symbol_order=23)
+
+===== Basic block count: 1 =====
+Function Name: scale_samples
+----- Statement count: 1 -----
+# DEBUG BEGIN_STMT
+----- Statement count: 2 -----
+# DEBUG BEGIN_STMT
+----- Statement count: 3 -----
+# DEBUG x => 0
+----- Statement count: 4 -----
+# DEBUG BEGIN_STMT
+----- Statement count: 5 -----
+if (cnt_16(D) > 0)
+===== Basic block count: 2 =====
+Function Name: scale_samples
+===== Basic block count: 3 =====
+Function Name: scale_samples
+----- Statement count: 6 -----
+_6 = volume_18(D) * 32767;
+----- Statement count: 7 -----
+_7 = _6 / 100;
+----- Statement count: 8 -----
+_8 = _7 << 1;
+----- Statement count: 9 -----
+_27 = (unsigned int) cnt_16(D);
+----- Statement count: 10 -----
+_23 = _27 + 4294967295;
+----- Statement count: 11 -----
+if (_23 > 2)
+===== Basic block count: 4 =====
+Function Name: scale_samples
+----- Statement count: 12 -----
+_14 = in_17(D) + 2;
+----- Statement count: 13 -----
+_13 = out_19(D) - _14;
+----- Statement count: 14 -----
+_38 = (sizetype) _13;
+----- Statement count: 15 -----
+"clone-test-aarch64-noprune-clone-test-core.c.263t.ctyler" 1359L, 36151B                                                                  1,0-1         Top

@@ -1,0 +1,41 @@
+
+;; Function scale_samples (scale_samples.default, funcdef_no=23, decl_uid=5500, cgraph_uid=24, symbol_order=23)
+
+===== Basic block count: 1 =====
+===== Basic block count: 2 =====
+===== Basic block count: 3 =====
+===== Basic block count: 4 =====
+===== Basic block count: 5 =====
+===== Basic block count: 6 =====
+===== Basic block count: 7 =====
+===== Basic block count: 8 =====
+===== Basic block count: 9 =====
+===== Basic block count: 10 =====
+===== Basic block count: 11 =====
+===== Basic block count: 12 =====
+===== Basic block count: 13 =====
+===== Basic block count: 14 =====
+===== Basic block count: 15 =====
+===== Basic block count: 16 =====
+===== Basic block count: 17 =====
+===== Basic block count: 18 =====
+===== Basic block count: 19 =====
+===== Basic block count: 20 =====
+===== Basic block count: 21 =====
+===== Basic block count: 22 =====
+===== Basic block count: 23 =====
+===== Basic block count: 24 =====
+===== Basic block count: 25 =====
+===== Basic block count: 26 =====
+===== Basic block count: 27 =====
+===== Basic block count: 28 =====
+===== Basic block count: 29 =====
+===== Basic block count: 30 =====
+===== Basic block count: 31 =====
+===== Basic block count: 32 =====
+__attribute__((target_version ("default"), target_clones ("default", "sve2")))
+void scale_samples (int16_t * in, int16_t * out, int cnt, int volume)
+{
+  sizetype ivtmp.47;
+  sizetype ivtmp.42;
+"clone-test-aarch64-noprune-clone-test-core.c.263t.ctyler" 705L, 17611B                                                                   32,1          Top
